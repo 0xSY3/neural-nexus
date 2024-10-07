@@ -7,7 +7,6 @@ import { ParticleProvider } from '@particle-network/provider';
 const particleNetwork = new ParticleNetwork({
   projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
   clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
-  appId: process.env.NEXT_PUBLIC_PARTICLE_APP_ID as string,
   chainName: 'ethereum',
   chainId: 1,
 });
