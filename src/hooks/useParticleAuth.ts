@@ -1,17 +1,19 @@
 // src/hooks/useParticleAuth.ts
 
+'use client';
+
 import { useState, useEffect } from 'react';
 import { ParticleNetwork } from '@particle-network/auth';
 import { ParticleProvider } from '@particle-network/provider';
 import { ethers } from 'ethers';
 
 const particleNetwork = new ParticleNetwork({
-    projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
-    clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
-    chainName: 'ethereum',
-    chainId: 1, 
-    appId: '', 
-  });
+  projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
+  clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
+  appId: process.env.NEXT_PUBLIC_PARTICLE_APP_ID as string,
+  chainName: 'ethereum',
+  chainId: 1,
+});
 
 export function useParticleAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,7 +24,9 @@ export function useParticleAuth() {
   }, []);
 
   const checkLoginStatus = async () => {
+    console.log("Checking login status...");
     const user = await particleNetwork.auth.isLoginAsync();
+    console.log("User logged in:", !!user);
     setIsLoggedIn(!!user);
     if (user) {
       const address = await getAddress();
@@ -31,8 +35,10 @@ export function useParticleAuth() {
   };
 
   const login = async () => {
+    console.log("Attempting to login...");
     try {
       await particleNetwork.auth.login();
+      console.log("Login successful");
       setIsLoggedIn(true);
       const address = await getAddress();
       setUserAddress(address);
@@ -42,8 +48,10 @@ export function useParticleAuth() {
   };
 
   const logout = async () => {
+    console.log("Attempting to logout...");
     try {
       await particleNetwork.auth.logout();
+      console.log("Logout successful");
       setIsLoggedIn(false);
       setUserAddress(null);
     } catch (error) {
@@ -56,7 +64,9 @@ export function useParticleAuth() {
       const particleProvider = new ParticleProvider(particleNetwork.auth);
       const provider = new ethers.providers.Web3Provider(particleProvider as any);
       const signer = provider.getSigner();
-      return await signer.getAddress();
+      const address = await signer.getAddress();
+      console.log("Got address:", address);
+      return address;
     } catch (error) {
       console.error('Failed to get address:', error);
       return null;

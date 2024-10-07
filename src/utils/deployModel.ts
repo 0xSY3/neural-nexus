@@ -1,13 +1,8 @@
 // src/utils/deployModel.ts
 
-import { ethers } from 'ethers';
 import { ParticleProvider } from '@particle-network/provider';
+import { ethers } from 'ethers';
 
-const mockDeploymentABI = [
-  "function deployModel(string modelId, uint256 price) public payable returns (bool)"
-];
-
-const MOCK_DEPLOYMENT_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
 export async function deployModel(
   particleProvider: ParticleProvider,
   modelId: string,
@@ -17,19 +12,10 @@ export async function deployModel(
   try {
     const provider = new ethers.providers.Web3Provider(particleProvider as any);
     const signer = provider.getSigner();
-    
-    const deploymentContract = new ethers.Contract(MOCK_DEPLOYMENT_CONTRACT_ADDRESS, mockDeploymentABI, signer);
-    
-    const priceInWei = ethers.utils.parseEther(price);
-    
-    const tx = await deploymentContract.deployModel(modelId, priceInWei, {
-      value: priceInWei
-    });
-    
-    const receipt = await tx.wait();
-
-    // Save the deployed model info
     const userAddress = await signer.getAddress();
+
+    const simulatedTxHash = ethers.utils.id(`${modelId}-${userAddress}-${Date.now()}`);
+
     const saveResponse = await fetch('/api/deployed-models', {
       method: 'POST',
       headers: {
@@ -38,8 +24,9 @@ export async function deployModel(
       body: JSON.stringify({
         modelId,
         userId: userAddress,
-        transactionHash: receipt.transactionHash,
+        transactionHash: simulatedTxHash,
         chain,
+        price,
       }),
     });
 
@@ -49,7 +36,7 @@ export async function deployModel(
 
     return {
       success: true,
-      transactionHash: receipt.transactionHash
+      transactionHash: simulatedTxHash
     };
   } catch (error) {
     console.error("Deployment failed:", error);

@@ -9,6 +9,7 @@ interface DeploymentModalProps {
   onConfirm: () => void;
   modelName: string;
   price: string;
+  chain: string;
 }
 
 const DeploymentModal: React.FC<DeploymentModalProps> = ({
@@ -17,6 +18,7 @@ const DeploymentModal: React.FC<DeploymentModalProps> = ({
   onConfirm,
   modelName,
   price,
+  chain,
 }) => {
   return (
     <AnimatePresence>
@@ -34,11 +36,14 @@ const DeploymentModal: React.FC<DeploymentModalProps> = ({
             className="bg-gradient-to-br from-blue-900 to-teal-900 p-8 rounded-lg shadow-xl max-w-md w-full"
           >
             <h2 className="text-2xl font-bold mb-4 text-teal-300">Confirm Deployment</h2>
-            <p className="text-white mb-4">
-              You are about to deploy the model: <span className="font-bold">{modelName}</span>
+            <p className="text-white mb-2">
+              Model: <span className="font-bold">{modelName}</span>
+            </p>
+            <p className="text-white mb-2">
+              Price: <span className="font-bold">{price} ETH</span>
             </p>
             <p className="text-white mb-6">
-              Deployment cost: <span className="font-bold">{price} ETH</span>
+              Chain: <span className="font-bold">{chain}</span>
             </p>
             <div className="flex justify-end space-x-4">
               <button

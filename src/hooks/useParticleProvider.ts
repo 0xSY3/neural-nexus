@@ -1,13 +1,15 @@
+// src/hooks/useParticleProvider.ts
+
 import { useState, useEffect } from 'react';
 import { ParticleNetwork } from '@particle-network/auth';
 import { ParticleProvider } from '@particle-network/provider';
 
 const particleNetwork = new ParticleNetwork({
-    appId: 'your-app-id', 
-    projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
-    clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
-    chainName: 'ethereum',
-    chainId: 1, 
+  projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
+  clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
+  appId: process.env.NEXT_PUBLIC_PARTICLE_APP_ID as string,
+  chainName: 'ethereum',
+  chainId: 1,
 });
 
 export function useParticleProvider() {

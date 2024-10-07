@@ -3,21 +3,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useParticleAuth } from '../hooks/useParticleAuth';
-import { useParticleProvider } from '../hooks/useParticleProvider';
 import { FaBrain, FaChartLine, FaUsersCog } from 'react-icons/fa';
-
-// Mock function to simulate SEDA Oracle data feed
-const fetchSEDAData = async () => {
-  // In a real implementation, this would be an actual API call to SEDA
-  return {
-    totalModels: Math.floor(Math.random() * 1000) + 1000,
-    totalValue: (Math.random() * 1000 + 500).toFixed(2),
-  };
-};
 
 interface AIModel {
   id: string;
@@ -25,67 +14,20 @@ interface AIModel {
   description: string;
   image: string;
   price: string;
-  chain: string;
 }
-
-const AIModelCard: React.FC<AIModel> = ({ id, name, description, image, price, chain }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 50 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className="bg-gradient-to-br from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-6 border border-teal-500/20 hover:border-teal-500/50 transition-all duration-300 shadow-xl"
-  >
-    <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
-      <Image src={image} alt={name} layout="fill" objectFit="cover" />
-    </div>
-    <h3 className="text-2xl font-bold mb-2 text-teal-300">{name}</h3>
-    <p className="text-gray-300 mb-4">{description}</p>
-    <div className="flex justify-between items-center">
-      <span className="text-teal-400 font-semibold">{price} ETH</span>
-      <span className="text-teal-400 font-semibold">Chain: {chain}</span>
-    </div>
-    <Link href={`/model/${id}`}>
-      <button className="mt-4 w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white px-4 py-2 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg">
-        View Details
-      </button>
-    </Link>
-  </motion.div>
-);
 
 export default function Home() {
   const { isLoggedIn, userAddress, login, logout } = useParticleAuth();
-  const { particleProvider } = useParticleProvider();
   const [aiModels, setAiModels] = useState<AIModel[]>([]);
-  const [sedaData, setSedaData] = useState({ totalModels: 0, totalValue: '0' });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch AI models
-        const modelsResponse = await fetch('/api/model/all');
-        const modelsData = await modelsResponse.json();
-        setAiModels(modelsData);
-
-        // Fetch SEDA data
-        const sedaData = await fetchSEDAData();
-        setSedaData(sedaData);
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setLoading(false);
-      }
+    const fetchModels = async () => {
+      const response = await fetch('/api/models');
+      const data = await response.json();
+      setAiModels(data);
     };
-
-    fetchData();
+    fetchModels();
   }, []);
-
-  if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-teal-900 text-white flex items-center justify-center">
-      <p className="text-2xl text-teal-300">Loading...</p>
-    </div>;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-teal-900 text-white p-8">
@@ -116,10 +58,25 @@ export default function Home() {
 
       <main>
         <section className="mb-16">
-          <h2 className="text-3xl font-semibold mb-8 text-center text-teal-300">Featured AI Models</h2>
+          <h2 className="text-3xl font-semibold mb-8 text-center text-teal-300">Available AI Models</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {aiModels.map((model) => (
-              <AIModelCard key={model.id} {...model} />
+              <motion.div
+                key={model.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-gradient-to-br from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-6 border border-teal-500/20 shadow-xl"
+              >
+                <h3 className="text-2xl font-bold mb-2 text-teal-300">{model.name}</h3>
+                <p className="text-gray-300 mb-4">{model.description}</p>
+                <p className="text-teal-400 font-semibold mb-4">Price: {model.price} ETH</p>
+                <Link href={`/model/${model.id}`}>
+                  <button className="w-full bg-gradient-to-r from-teal-600 to-blue-600 text-white px-4 py-2 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg">
+                    View Details
+                  </button>
+                </Link>
+              </motion.div>
             ))}
           </div>
         </section>
@@ -134,8 +91,8 @@ export default function Home() {
             </div>
             <div className="bg-gradient-to-br from-blue-900/30 to-teal-900/30 backdrop-blur-lg rounded-lg p-6 border border-teal-500/20 shadow-xl">
               <FaChartLine className="text-5xl text-teal-400 mb-4 mx-auto" />
-              <h3 className="text-xl font-semibold mb-2 text-teal-300 text-center">Real-Time Market Data</h3>
-              <p className="text-gray-300 text-center">Powered by SEDA Oracle for up-to-date market insights.</p>
+              <h3 className="text-xl font-semibold mb-2 text-teal-300 text-center">Real-Time Analytics</h3>
+              <p className="text-gray-300 text-center">Monitor your AI models' performance with advanced analytics.</p>
             </div>
             <div className="bg-gradient-to-br from-blue-900/30 to-teal-900/30 backdrop-blur-lg rounded-lg p-6 border border-teal-500/20 shadow-xl">
               <FaUsersCog className="text-5xl text-teal-400 mb-4 mx-auto" />
@@ -144,24 +101,10 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <section className="text-center bg-gradient-to-r from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-8 border border-teal-500/20 shadow-xl">
-          <h2 className="text-3xl font-semibold mb-4 text-teal-300">Market Insights (Powered by SEDA Oracle)</h2>
-          <div className="flex justify-center space-x-12">
-            <div>
-              <p className="text-4xl font-bold text-teal-400">{sedaData.totalModels}</p>
-              <p className="text-gray-300">Total Models</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-teal-400">{sedaData.totalValue} ETH</p>
-              <p className="text-gray-300">Total Value Locked</p>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="mt-16 text-center text-teal-300">
-        <p>© 2024 NeuralNexus AI Marketplace. Powered by Particle Network and SEDA Oracle.</p>
+        <p>© 2024 NeuralNexus AI Marketplace. Powered by Particle Network.</p>
       </footer>
     </div>
   );
