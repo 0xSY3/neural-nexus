@@ -1,11 +1,13 @@
-
 'use client'
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FaChip, FaCode, FaServer } from 'react-icons/fa';
-import Image from 'next/image';
+import { useParticleProvider } from '../../../hooks/useParticleProvider';
+import { deployModel } from '../../../utils/deployModel';
+import DeploymentConfirmationModal from '../../../components/DeploymentConfirmationModal';
 
 interface AIModelDetailsProps {
   id: string;
@@ -28,6 +30,39 @@ const AIModelDetails: React.FC<AIModelDetailsProps> = ({
   compatibility,
   creator,
 }) => {
+  const { particleProvider } = useParticleProvider();
+  const [deploying, setDeploying] = useState(false);
+  const [deploymentResult, setDeploymentResult] = useState<any>(null);
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+
+  const handleDeployClick = () => {
+    setIsConfirmationModalOpen(true);
+  };
+
+  const handleDeployConfirm = async () => {
+    setIsConfirmationModalOpen(false);
+    if (!particleProvider) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    setDeploying(true);
+    try {
+      const result = await deployModel(particleProvider, id, price);
+      setDeploymentResult(result);
+      if (result.success) {
+        alert(`Model deployed successfully! Transaction hash: ${result.transactionHash}`);
+      } else {
+        alert(`Deployment failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Deployment error:', error);
+      alert('An error occurred during deployment. Please try again.');
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-8 border border-teal-500/20 shadow-xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -122,10 +157,33 @@ const AIModelDetails: React.FC<AIModelDetailsProps> = ({
         transition={{ duration: 0.5, delay: 0.6 }}
         className="mt-8 flex justify-center"
       >
-        <button className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg">
-          Deploy Model
+        <button
+          onClick={handleDeployClick}
+          disabled={deploying}
+          className={`bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg ${
+            deploying ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {deploying ? 'Deploying...' : 'Deploy Model'}
         </button>
       </motion.div>
+      {deploymentResult && deploymentResult.success && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-4 text-center text-teal-300"
+        >
+          Deployment successful! Transaction hash: {deploymentResult.transactionHash}
+        </motion.div>
+      )}
+      <DeploymentConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={handleDeployConfirm}
+        modelName={name}
+        price={price}
+      />
     </div>
   );
 };
@@ -140,7 +198,7 @@ export default function ModelPage() {
   useEffect(() => {
     const fetchModel = async () => {
       try {
-        const response = await fetch(`/api/model?id=${modelId}`);
+        const response = await fetch(`/api/model/${modelId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch model details');
         }

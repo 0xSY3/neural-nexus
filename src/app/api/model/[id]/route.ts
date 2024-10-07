@@ -35,18 +35,20 @@ const aiModels = [
   },
 ];
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get('id');
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
 
-  if (id) {
-    const model = aiModels.find(m => m.id === id);
-    if (model) {
-      return NextResponse.json(model);
-    } else {
-      return NextResponse.json({ error: 'Model not found' }, { status: 404 });
-    }
+  if (id === 'all') {
+    return NextResponse.json(aiModels);
   }
 
-  return NextResponse.json(aiModels);
+  const model = aiModels.find(m => m.id === id);
+  if (model) {
+    return NextResponse.json(model);
+  } else {
+    return NextResponse.json({ error: 'Model not found' }, { status: 404 });
+  }
 }
