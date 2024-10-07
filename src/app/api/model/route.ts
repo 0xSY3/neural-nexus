@@ -1,3 +1,5 @@
+// src/api/model/route.ts
+
 import { NextResponse } from 'next/server';
 
 const aiModels = [
@@ -32,10 +34,6 @@ const aiModels = [
     creator: 'BioTech Innovations'
   },
 ];
-
-export async function GET() {
-  return NextResponse.json(aiModels);
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

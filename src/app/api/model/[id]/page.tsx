@@ -1,4 +1,3 @@
-// src/app/model/[id]/page.tsx
 
 'use client'
 
@@ -141,7 +140,7 @@ export default function ModelPage() {
   useEffect(() => {
     const fetchModel = async () => {
       try {
-        const response = await fetch(`/api/models?id=${modelId}`);
+        const response = await fetch(`/api/model?id=${modelId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch model details');
         }

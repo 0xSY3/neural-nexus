@@ -1,18 +1,17 @@
 // src/hooks/useParticleAuth.ts
 
 import { useState, useEffect } from 'react';
-import { ParticleNetwork, ParticleProvider } from '@particle-network/auth';
+import { ParticleNetwork } from '@particle-network/auth';
+import { ParticleProvider } from '@particle-network/provider';
 import { ethers } from 'ethers';
 
 const particleNetwork = new ParticleNetwork({
-  projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
-  clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
-  appId: process.env.NEXT_PUBLIC_PARTICLE_APP_ID as string,
-  chainName: 'ethereum', // or your preferred chain
-  chainId: 1, // or your preferred chain ID
-});
-
-const particleProvider = new ParticleProvider(particleNetwork.auth);
+    projectId: process.env.NEXT_PUBLIC_PARTICLE_PROJECT_ID as string,
+    clientKey: process.env.NEXT_PUBLIC_PARTICLE_CLIENT_KEY as string,
+    chainName: 'ethereum',
+    chainId: 1, 
+    appId: '', 
+  });
 
 export function useParticleAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -54,6 +53,7 @@ export function useParticleAuth() {
 
   const getAddress = async (): Promise<string | null> => {
     try {
+      const particleProvider = new ParticleProvider(particleNetwork.auth);
       const provider = new ethers.providers.Web3Provider(particleProvider as any);
       const signer = provider.getSigner();
       return await signer.getAddress();

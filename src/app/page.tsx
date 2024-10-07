@@ -1,4 +1,3 @@
-// src/app/page.tsx
 
 'use client'
 
@@ -88,7 +87,7 @@ export default function Home() {
 
   const fetchAIModels = async () => {
     try {
-      const response = await fetch('/api/models');
+      const response = await fetch('/api/model');
       if (!response.ok) {
         throw new Error('Failed to fetch AI models');
       }

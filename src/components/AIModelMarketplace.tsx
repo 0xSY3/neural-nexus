@@ -8,7 +8,6 @@ import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei';
 import { FaBrain, FaChartLine, FaUsersCog } from 'react-icons/fa';
 import { useParticleAuth } from '../hooks/useParticleAuth';
 
-// ... (keep the AnimatedSphere, AIModel, and FeatureCard components as they were)
 
 
 const AIModel = ({ id, name, description, image, price }) => (
@@ -57,7 +56,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-teal-900 text-white">
-      {/* ... (keep the Canvas and AnimatedSphere as they were) */}
 
       <motion.div
         className="container mx-auto px-4 py-16 relative z-10"
@@ -156,5 +154,5 @@ export default function Home() {
         <p>© 2024 NeuralNexus AI Marketplace. Pioneering the Future of Artificial Intelligence.</p>
       </footer>
     </div>
-  );
-}
+  ); 
+}   
