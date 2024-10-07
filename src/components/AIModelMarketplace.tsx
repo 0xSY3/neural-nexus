@@ -1,154 +1,160 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from 'react-query';
-import { ethers } from 'ethers';
-import { particle, particleProvider } from '../utils/particle';
-import { MockOracle } from '../utils/mockOracle';
-import * as mockKlaster from '../utils/mockKlaster';
+'use client'
 
-interface AIModel {
-  id: string;
-  name: string;
-  description: string;
-  chain: string;
-  price: string;
-}
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei';
+import { FaBrain, FaChartLine, FaUsersCog } from 'react-icons/fa';
+import { useParticleAuth } from '../hooks/useParticleAuth';
 
-const AIModelMarketplace: React.FC = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [aiModels, setAiModels] = useState<AIModel[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+// ... (keep the AnimatedSphere, AIModel, and FeatureCard components as they were)
 
-  const mockOracle = new MockOracle();
 
-  const { data: marketData } = useQuery('marketData', async () => {
-    return await mockOracle.getCustomFeed('ai-model-market-data');
-  });
+const AIModel = ({ id, name, description, image, price }) => (
+    <motion.div
+      className="bg-gradient-to-br from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-6 border border-teal-500/20 hover:border-teal-500/50 transition-all duration-300 shadow-xl"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <div className="relative w-full h-48 mb-4 rounded-md overflow-hidden">
+        <Image src={image} alt={name} layout="fill" objectFit="cover" />
+      </div>
+      <h3 className="text-2xl font-bold mb-2 text-teal-300">{name}</h3>
+      <p className="text-gray-300 mb-4">{description}</p>
+      <div className="flex justify-between items-center">
+        <span className="text-teal-400 font-semibold">{price} ETH</span>
+        <Link href={`/model/${id}`}>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-4 py-2 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg"
+          >
+            View Details
+          </motion.button>
+        </Link>
+      </div>
+    </motion.div>
+  );
+
+export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const scaleProgress = useTransform(scrollYProgress, [0, 1], [0.8, 1]);
+  const { isLoggedIn, userAddress, login, logout } = useParticleAuth();
 
   useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        const user = await particle.auth.isLoginAsync();
-        if (user) {
-          const userAddress = await particleProvider.request({ method: 'eth_accounts' });
-          if (Array.isArray(userAddress) && userAddress.length > 0) {
-            setAddress(userAddress[0]);
-          }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        setAuthError("Failed to check authentication status. Using placeholder credentials.");
-      }
-    };
-    checkLogin();
+    setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const fetchAIModels = async () => {
-      const mockModels: AIModel[] = [
-        { id: '1', name: 'GPT-4 Replica', description: 'Language model', chain: 'Ethereum', price: '0.1' },
-        { id: '2', name: 'DALL-E Clone', description: 'Image generation', chain: 'Polygon', price: '0.05' },
-        { id: '3', name: 'AlphaFold Variant', description: 'Protein folding', chain: 'Solana', price: '0.2' },
-      ];
-      setAiModels(mockModels);
-    };
-    fetchAIModels();
-  }, []);
+  const aiModels = [
+    { id: '1', name: 'NeuraSynth Pro', description: 'State-of-the-art language model with enhanced contextual understanding', image: '/ai-model-1.jpg', price: '2.5' },
+    { id: '2', name: 'QuantumViz Elite', description: 'Advanced image generation powered by quantum-inspired algorithms', image: '/ai-model-2.jpg', price: '3.2' },
+    { id: '3', name: 'BioForge AI Suite', description: 'Comprehensive suite for protein folding and drug discovery', image: '/ai-model-3.jpg', price: '4.7' },
+  ];
 
-  const handleLogin = async () => {
-    try {
-      await particle.auth.login();
-      const userAddress = await particleProvider.request({ method: 'eth_accounts' });
-      if (Array.isArray(userAddress) && userAddress.length > 0) {
-        setAddress(userAddress[0]);
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      setAuthError("Login failed. Using placeholder credentials.");
-      // Simulate successful login with a placeholder address
-      setAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await particle.auth.logout();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-    setAddress(null);
-    setAuthError(null);
-  };
-
-  const handleModelSelection = async (modelId: string) => {
-    setSelectedModel(modelId);
-    if (!address) return;
-
-    try {
-      const selectedAIModel = aiModels.find(model => model.id === modelId);
-      if (!selectedAIModel) throw new Error('Model not found');
-
-      // Simulate cross-chain model execution
-      console.log(`Executing model ${modelId} on ${selectedAIModel.chain}`);
-
-      // Use mock Klaster to optimize and explain the model usage
-      const optimizedExecution = await mockKlaster.optimizeModelExecution(modelId, { sampleInput: 'data' });
-      const explanation = await mockKlaster.explainAIModelUsage(modelId, { sampleInput: 'data' });
-
-      // Simulate transaction
-      const tx = {
-        to: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e', // Example address
-        value: ethers.utils.parseEther(selectedAIModel.price),
-        data: '0x', // Placeholder
-      };
-      const simplifiedTx = await mockKlaster.simplifyTransaction(tx);
-
-      console.log('Optimized execution:', optimizedExecution);
-      console.log('Usage explanation:', explanation);
-      console.log('Simplified transaction:', simplifiedTx);
-
-      alert(`AI Model execution simulated. Check console for details.`);
-    } catch (error) {
-      console.error('Model execution error:', error);
-      alert('An error occurred during model execution. Please try again.');
-    }
-  };
+  if (!mounted) return null;
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">NeuralNexus AI Marketplace</h1>
-      {authError && <p className="text-red-500 mb-4">{authError}</p>}
-      {address ? (
-        <>
-          <p>Connected Address: {address}</p>
-          <button onClick={handleLogout} className="bg-red-500 text-white p-2 rounded mt-2">Logout</button>
-          <h2 className="text-xl font-semibold mt-4 mb-2">Available AI Models:</h2>
-          <ul>
-            {aiModels.map(model => (
-              <li key={model.id} className="mb-2">
-                <button
-                  onClick={() => handleModelSelection(model.id)}
-                  className="bg-blue-500 text-white p-2 rounded mr-2"
-                >
-                  {model.name} ({model.chain}) - {model.price} ETH
-                </button>
-                <span>{model.description}</span>
-              </li>
-            ))}
-          </ul>
-          {marketData && (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-teal-900 text-white">
+      {/* ... (keep the Canvas and AnimatedSphere as they were) */}
+
+      <motion.div
+        className="container mx-auto px-4 py-16 relative z-10"
+        style={{ scale: scaleProgress }}
+      >
+        <motion.header
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
+            NeuralNexus AI Marketplace
+          </h1>
+          <p className="text-xl text-teal-300">Elevating Intelligence, Empowering Innovation</p>
+          {isLoggedIn ? (
             <div className="mt-4">
-              <h3 className="text-lg font-semibold">Market Data:</h3>
-              <p>Total Models: {marketData.totalModels}</p>
-              <p>24h Volume: {marketData.volume24h} ETH</p>
+              <p className="text-teal-300">Welcome, {userAddress}</p>
+              <button
+                onClick={logout}
+                className="mt-2 bg-red-500 text-white px-4 py-2 rounded-full font-bold hover:bg-red-600 transition-all duration-300"
+              >
+                Logout
+              </button>
             </div>
+          ) : (
+            <button
+              onClick={login}
+              className="mt-4 bg-gradient-to-r from-teal-600 to-blue-600 text-white px-6 py-3 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg"
+            >
+              Connect Wallet
+            </button>
           )}
-        </>
-      ) : (
-        <button onClick={handleLogin} className="bg-green-500 text-white p-2 rounded">Login with Particle</button>
-      )}
+        </motion.header>
+
+        {isLoggedIn && (
+          <>
+            <>
+          <section className="mb-20">
+            <h2 className="text-3xl font-semibold mb-8 text-center text-teal-300">Premium AI Models</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {aiModels.map((model) => (
+                <AIModel key={model.id} {...model} />
+              ))}
+            </div>
+          </section>
+
+            <section className="mb-20">
+              <h2 className="text-3xl font-semibold mb-8 text-center text-teal-300">Marketplace Highlights</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <FeatureCard
+                  icon={<FaBrain />}
+                  title="Cutting-Edge AI"
+                  description="Access the most advanced AI models from leading researchers and institutions."
+                />
+                <FeatureCard
+                  icon={<FaChartLine />}
+                  title="Real-time Analytics"
+                  description="Monitor your AI models' performance with advanced, real-time analytics."
+                />
+                <FeatureCard
+                  icon={<FaUsersCog />}
+                  title="Collaborative Development"
+                  description="Join a thriving ecosystem of AI developers, researchers, and enthusiasts."
+                />
+              </div>
+            </section>
+
+            <motion.section
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center bg-gradient-to-r from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-8 border border-teal-500/20 shadow-xl"
+            >
+              <h2 className="text-3xl font-semibold mb-4 text-teal-300">Market Insights</h2>
+              <div className="flex justify-center space-x-12">
+                <div>
+                  <p className="text-4xl font-bold text-teal-400">2,845</p>
+                  <p className="text-gray-300">Total Models</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-bold text-teal-400">152.7 ETH</p>
+                  <p className="text-gray-300">24h Volume</p>
+                </div>
+                <div>
+                  <p className="text-4xl font-bold text-teal-400">12,423</p>
+                  <p className="text-gray-300">Active Users</p>
+                </div>
+              </div>
+            </motion.section>
+          </>
+        )}
+      </motion.div>
+
+      <footer className="text-center py-8 text-teal-300 bg-black/20">
+        <p>© 2024 NeuralNexus AI Marketplace. Pioneering the Future of Artificial Intelligence.</p>
+      </footer>
     </div>
   );
-};
-
-export default AIModelMarketplace;
+}
