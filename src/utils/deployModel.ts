@@ -7,13 +7,12 @@ const mockDeploymentABI = [
   "function deployModel(string modelId, uint256 price) public payable returns (bool)"
 ];
 
-
 const MOCK_DEPLOYMENT_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
-
 export async function deployModel(
   particleProvider: ParticleProvider,
   modelId: string,
-  price: string
+  price: string,
+  chain: string
 ) {
   try {
     const provider = new ethers.providers.Web3Provider(particleProvider as any);
@@ -28,7 +27,9 @@ export async function deployModel(
     });
     
     const receipt = await tx.wait();
-    
+
+    // Save the deployed model info
+    const userAddress = await signer.getAddress();
     const saveResponse = await fetch('/api/deployed-models', {
       method: 'POST',
       headers: {
@@ -36,7 +37,9 @@ export async function deployModel(
       },
       body: JSON.stringify({
         modelId,
+        userId: userAddress,
         transactionHash: receipt.transactionHash,
+        chain,
       }),
     });
 

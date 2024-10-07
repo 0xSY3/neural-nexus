@@ -1,20 +1,21 @@
 // src/components/AIModelDetails.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { FaChip, FaCode, FaServer } from 'react-icons/fa';
+import { FaMicrochip, FaCode, FaServer } from 'react-icons/fa';
+import { useParticleProvider } from '../hooks/useParticleProvider';
+import { deployModel } from '../utils/deployModel';
+import DeploymentModal from './DeploymentModal';
 
-interface AIModelDetailsProps {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  price: string;
-  performance: string;
-  compatibility: string[];
-  creator: string;
-}
+// ... (previous imports and interface definitions)
+
+const SUPPORTED_CHAINS = [
+  { id: 'ethereum', name: 'Ethereum' },
+  { id: 'polygon', name: 'Polygon' },
+  { id: 'bsc', name: 'Binance Smart Chain' },
+  { id: 'avalanche', name: 'Avalanche' },
+];
 
 const AIModelDetails: React.FC<AIModelDetailsProps> = ({
   id,
@@ -26,6 +27,31 @@ const AIModelDetails: React.FC<AIModelDetailsProps> = ({
   compatibility,
   creator,
 }) => {
+  const { particleProvider } = useParticleProvider();
+  const [isDeploymentModalOpen, setIsDeploymentModalOpen] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deploymentResult, setDeploymentResult] = useState<{ success: boolean; transactionHash?: string } | null>(null);
+  const [selectedChain, setSelectedChain] = useState(SUPPORTED_CHAINS[0].id);
+
+  const handleDeployClick = () => {
+    setIsDeploymentModalOpen(true);
+  };
+
+  const handleDeployConfirm = async () => {
+    setIsDeploymentModalOpen(false);
+    setIsDeploying(true);
+
+    try {
+      const result = await deployModel(particleProvider, id, price, selectedChain);
+      setDeploymentResult(result);
+    } catch (error) {
+      console.error('Deployment failed:', error);
+      setDeploymentResult({ success: false });
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-900/50 to-teal-900/50 backdrop-blur-lg rounded-lg p-8 border border-teal-500/20 shadow-xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -93,7 +119,7 @@ const AIModelDetails: React.FC<AIModelDetailsProps> = ({
         className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         <div className="flex items-center bg-blue-900/30 p-4 rounded-lg">
-          <FaChip className="text-3xl text-teal-400 mr-4" />
+          <FaMicrochip className="text-3xl text-teal-400 mr-4" />
           <div>
             <h4 className="text-lg font-semibold text-teal-300">Advanced Architecture</h4>
             <p className="text-sm text-gray-300">Cutting-edge neural network design</p>
@@ -120,10 +146,39 @@ const AIModelDetails: React.FC<AIModelDetailsProps> = ({
         transition={{ duration: 0.5, delay: 0.6 }}
         className="mt-8 flex justify-center"
       >
-        <button className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg">
-          Deploy Model
+        <button
+          onClick={handleDeployClick}
+          disabled={isDeploying}
+          className={`bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full font-bold hover:from-teal-700 hover:to-blue-700 transition-all duration-300 shadow-lg ${
+            isDeploying ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isDeploying ? 'Deploying...' : 'Deploy Model'}
         </button>
       </motion.div>
+      {deploymentResult && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-4 text-center"
+        >
+          {deploymentResult.success ? (
+            <p className="text-green-400">
+              Deployment successful! Transaction hash: {deploymentResult.transactionHash}
+            </p>
+          ) : (
+            <p className="text-red-400">Deployment failed. Please try again.</p>
+          )}
+        </motion.div>
+      )}
+      <DeploymentModal
+        isOpen={isDeploymentModalOpen}
+        onClose={() => setIsDeploymentModalOpen(false)}
+        onConfirm={handleDeployConfirm}
+        modelName={name}
+        price={price}
+      />
     </div>
   );
 };

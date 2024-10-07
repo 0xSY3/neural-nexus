@@ -1,3 +1,4 @@
+// src/app/page.tsx
 
 'use client'
 
@@ -9,7 +10,9 @@ import { useParticleAuth } from '../hooks/useParticleAuth';
 import { useParticleProvider } from '../hooks/useParticleProvider';
 import { FaBrain, FaChartLine, FaUsersCog } from 'react-icons/fa';
 
+// Mock function to simulate SEDA Oracle data feed
 const fetchSEDAData = async () => {
+  // In a real implementation, this would be an actual API call to SEDA
   return {
     totalModels: Math.floor(Math.random() * 1000) + 1000,
     totalValue: (Math.random() * 1000 + 500).toFixed(2),
@@ -59,10 +62,12 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch AI models
         const modelsResponse = await fetch('/api/model/all');
         const modelsData = await modelsResponse.json();
         setAiModels(modelsData);
 
+        // Fetch SEDA data
         const sedaData = await fetchSEDAData();
         setSedaData(sedaData);
 
